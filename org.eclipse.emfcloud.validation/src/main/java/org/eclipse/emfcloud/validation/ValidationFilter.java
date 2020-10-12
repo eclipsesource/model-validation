@@ -17,5 +17,16 @@ public class ValidationFilter {
     public String getSource(){
         return source;
     }
-    
+
+    @Override
+    public boolean equals(Object obj) {
+        ValidationFilter other = (ValidationFilter) obj;
+        if (code == other.code)
+            return true;
+        if (source.equals(other.source)) {
+            return true;
+        }
+        return false;
+    }
+
 }
