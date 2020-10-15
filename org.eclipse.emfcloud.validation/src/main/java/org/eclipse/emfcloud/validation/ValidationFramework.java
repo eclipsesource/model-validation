@@ -1,3 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2019-2020 EclipseSource and others.
+ *
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v. 2.0 which is available at
+ * https://www.eclipse.org/legal/epl-2.0.
+ *
+ * This Source Code may also be made available under the following Secondary
+ * Licenses when the conditions for such availability set forth in the Eclipse
+ * Public License v. 2.0 are satisfied: GNU General Public License, version 2
+ * with the GNU Classpath Exception which is available at
+ * https://www.gnu.org/software/classpath/license.html.
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ ******************************************************************************/
 package org.eclipse.emfcloud.validation;
 
 import java.io.IOException;
@@ -74,7 +89,6 @@ public class ValidationFramework {
         this.modelServerClient.validationSubscribe(modelUri, new SubscriptionListener() {
             @Override
             public void onOpen(Response<String> response) {
-                System.out.println("Connected: " + response.getMessage());
                 try {
                     validate();
                 } catch (IOException e) {
@@ -91,28 +105,23 @@ public class ValidationFramework {
 
             @Override
             public void onClosing(int code, @NotNull String reason) {
-                System.out.println("Closing: Code " + code);
             }
 
             @Override
             public void onFailure(Throwable t) {
-                System.out.println("Failed: ");
                 t.printStackTrace();
             }
 
             @Override
             public void onClosed(int code, @NotNull String reason) {
-                System.out.println("Connection closed: Reason " + reason);
             }
 
             @Override
             public void onFailure(Throwable t, Response<String> response) {
-                System.out.println("Failed: " + response);
             }
 
             @Override
             public void onNotification(ModelServerNotification notification) {
-                System.out.println("Notification: " + notification);
                 if (notification.getType().equals("validationResult")) {
                     try {
                         ObjectMapper mapper = new ObjectMapper();
@@ -121,7 +130,6 @@ public class ValidationFramework {
                     } catch (IOException e) {
                         // TODO Auto-generated catch block
                         e.printStackTrace();
-                        System.out.println("failed to get Notification");
                     }
                 }
             }
@@ -162,8 +170,7 @@ public class ValidationFramework {
         if (node.get("type").asText().equals("validationResult")) {
             JsonNode responseData = node.get("data");
             updateRecentValidationResult(jsonToValidationResultList(mapper, responseData));
-        } else
-            System.out.println("No Response");
+        }
     }
 
     private void readConstraintList(String body) throws IOException {
@@ -208,8 +215,7 @@ public class ValidationFramework {
                 }
                 this.inputValidationMap.put(Integer.parseInt(elementKey), featuresMap);
             }
-        } else
-            System.out.println("No Response");
+        }
     }
 
     private void updateRecentValidationResult(List<ValidationResult> validationResults) {
@@ -244,7 +250,7 @@ public class ValidationFramework {
         return new ValidationResult(identifier, diagnostic);
     }
 
-    public BasicDiagnostic jsonToDiagnostic(ObjectMapper mapper, JsonNode responseData){
+    private BasicDiagnostic jsonToDiagnostic(ObjectMapper mapper, JsonNode responseData){
         Object[] dataField = mapper.convertValue(responseData.get("data"), Object[].class);
         List<BasicDiagnostic> children = new ArrayList<>();
         for (JsonNode child : responseData.get("children")) {
