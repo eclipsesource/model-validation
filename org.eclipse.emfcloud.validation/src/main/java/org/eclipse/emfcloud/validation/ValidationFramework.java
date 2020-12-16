@@ -1,17 +1,12 @@
 /*******************************************************************************
- * Copyright (c) 2019-2020 EclipseSource and others.
+ * Copyright (c) 2020 EclipseSource and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
- * https://www.eclipse.org/legal/epl-2.0.
+ * https://www.eclipse.org/legal/epl-2.0, or the MIT License which is
+ * available at https://opensource.org/licenses/MIT.
  *
- * This Source Code may also be made available under the following Secondary
- * Licenses when the conditions for such availability set forth in the Eclipse
- * Public License v. 2.0 are satisfied: GNU General Public License, version 2
- * with the GNU Classpath Exception which is available at
- * https://www.gnu.org/software/classpath/license.html.
- *
- * SPDX-License-Identifier: EPL-2.0 OR GPL-2.0 WITH Classpath-exception-2.0
+ * SPDX-License-Identifier: EPL-2.0 OR MIT
  ******************************************************************************/
 package org.eclipse.emfcloud.validation;
 
@@ -25,23 +20,27 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.eclipse.emf.common.util.BasicDiagnostic;
+import org.apache.log4j.Logger;
+import org.eclipse.emf.ecore.EObject;
 import org.eclipse.emfcloud.modelserver.client.ModelServerClient;
-import org.eclipse.emfcloud.modelserver.client.ModelServerNotification;
-import org.eclipse.emfcloud.modelserver.client.Response;
-import org.eclipse.emfcloud.modelserver.client.SubscriptionListener;
-import org.jetbrains.annotations.NotNull;
+import org.eclipse.emfcloud.modelserver.client.ModelServerClientApi;
+import org.eclipse.emfcloud.modelserver.emf.common.EMFFacetConstraints;
+import org.eclipse.emfcloud.modelserver.emf.common.ValidationMapperModule;
+import org.emfjson.jackson.module.EMFModule;
 
 public class ValidationFramework {
+	
+	private static Logger LOG = Logger.getLogger(ValidationFramework.class.getSimpleName());
 
     private String defaultURL = "http://localhost:8081/api/v1/";
 
     private String modelUri;
 
-    private ModelServerClient modelServerClient;
+    private ModelServerClientApi<EObject> modelServerApi;
 
     public List<ValidationResult> recentValidationResult = new ArrayList<>();
 
@@ -53,95 +52,48 @@ public class ValidationFramework {
 
     public ValidationFramework(String modelUri, ValidationResultChangeListener changeListener) throws MalformedURLException {
         this.modelUri = modelUri;
-        this.modelServerClient = new ModelServerClient(defaultURL);
+        this.modelServerApi = new ModelServerClient(defaultURL);
         this.changeListener = changeListener;
     }
 
-    public ValidationFramework(String modelUri, ModelServerClient modelServerClient, ValidationResultChangeListener changeListener) {
+    public ValidationFramework(String modelUri, ModelServerClientApi<EObject> modelServerApi, ValidationResultChangeListener changeListener) {
         this.modelUri = modelUri;
-        this.modelServerClient = modelServerClient;
+        this.modelServerApi = modelServerApi;
         this.changeListener = changeListener;
     }
 
     public CompletableFuture<Void> validate() throws IOException, InterruptedException, ExecutionException {
-        return this.modelServerClient.validate(modelUri).thenAccept(s -> {
+        return this.modelServerApi.validate(modelUri).thenAccept(s -> {
             try {
                 readData(modelUri, s.body());
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+            	LOG.error("Cannot validate " + modelUri);
                 e.printStackTrace();
             }
         });
     }
 
     public CompletableFuture<Void> getConstraintList() {
-        return this.modelServerClient.getConstraints(modelUri).thenAccept(s -> {
+        return this.modelServerApi.getConstraints(modelUri).thenAccept(s -> {
             try {
                 readConstraintList(s.body());
             } catch (IOException e) {
-                // TODO Auto-generated catch block
+                LOG.error("Could not retrieve the Constraint List for " + modelUri);
                 e.printStackTrace();
             }
         });
     }
 
     public void subscribeToValidation() {
-        this.modelServerClient.validationSubscribe(modelUri, new SubscriptionListener() {
-            @Override
-            public void onOpen(Response<String> response) {
-                try {
-                    validate();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (ExecutionException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onClosing(int code, @NotNull String reason) {
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                t.printStackTrace();
-            }
-
-            @Override
-            public void onClosed(int code, @NotNull String reason) {
-            }
-
-            @Override
-            public void onFailure(Throwable t, Response<String> response) {
-            }
-
-            @Override
-            public void onNotification(ModelServerNotification notification) {
-                if (notification.getType().equals("validationResult")) {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        updateRecentValidationResult(
-                                jsonToValidationResultList(mapper, mapper.readTree(notification.getData().get())));
-                    } catch (IOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                    }
-                }
-            }
-        });
+        this.modelServerApi.validationSubscribe(modelUri, new ValidationSubscriptionListener(this, modelUri));
     }
 
     public void unsubscribeFromValidation() {
-        this.modelServerClient.unsubscribeValidation(modelUri);
+        this.modelServerApi.unsubscribeValidation(modelUri);
     }
 
     public void addValidationFilter(List<ValidationFilter> filters)
-            throws IOException, InterruptedException, ExecutionException {
+        throws IOException, InterruptedException, ExecutionException {
         for(ValidationFilter f : filters){
             if(!validationFilterList.contains(f)) validationFilterList.add(f);
         }
@@ -149,23 +101,27 @@ public class ValidationFramework {
     }
 
     public void removeValidationFilter(List<ValidationFilter> filters)
-            throws IOException, InterruptedException, ExecutionException {
-        for(ValidationFilter f : filters){
-            if(validationFilterList.contains(f)) validationFilterList.remove(f);
+        throws IOException, InterruptedException, ExecutionException {
+        for(ValidationFilter filter : filters){
+            if(validationFilterList.contains(filter)) validationFilterList.remove(filter);
         }
         this.validate();
     }
 
-    public void toggleValidationFilter(ValidationFilter filter){
+    public void toggleValidationFilter(ValidationFilter filter)
+        throws IOException, InterruptedException, ExecutionException {
         if(validationFilterList.contains(filter)){
-            validationFilterList.remove((Object) filter);
+            validationFilterList.remove(filter);
         } else {
             validationFilterList.add(filter);
         }
+        this.validate();
     }
 
     private void readData(String modeluri, String body) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
+        mapper.registerModule(new ValidationMapperModule());
+        mapper.registerModule(new ValidationResultModule());
         JsonNode node = mapper.readTree(body);
         if (node.get("type").asText().equals("validationResult")) {
             JsonNode responseData = node.get("data");
@@ -174,7 +130,8 @@ public class ValidationFramework {
     }
 
     private void readConstraintList(String body) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = EMFModule.setupDefaultMapper();
+        mapper.registerModule(new ValidationMapperModule());
         JsonNode node = mapper.readTree(body);
         if (node.get("type").asText().equals("success")){
             JsonNode listOfElements = node.get("data");
@@ -189,28 +146,8 @@ public class ValidationFramework {
                 while(iterFeature.hasNext()){
                     String featureKey = iterFeature.next();
                     JsonNode facets = listOfFeatures.get(featureKey);
-                    //Get all Facets
-                    //First Create the two fields
-                    List<String> enumerationValues = new ArrayList<>();
-                    for (JsonNode enumeration : facets.get("enumeration")) {
-                        enumerationValues.add(enumeration.asText());
-                    }
-                    List<String> patternValues = new ArrayList<>();
-                    for (JsonNode pattern : facets.get("pattern")) {
-                        patternValues.add(pattern.asText());
-                    }
-                    EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(facets.get("whiteSpace").asInt(),
-                        enumerationValues,
-                        patternValues, 
-                        facets.get("totalDigits").asInt(), 
-                        facets.get("fractionDigits").asInt(), 
-                        facets.get("length").asInt(), 
-                        facets.get("minLength").asInt(),
-                        facets.get("maxLength").asInt(), 
-                        facets.get("minExclusive").asText(), 
-                        facets.get("maxExclusive").asText(), 
-                        facets.get("minInclusive").asText(), 
-                        facets.get("maxInclusive").asText());
+
+                    EMFFacetConstraints emfFacetConstraints = mapper.treeToValue(facets, EMFFacetConstraints.class);
                     featuresMap.put(Integer.parseInt(featureKey), emfFacetConstraints);
                 }
                 this.inputValidationMap.put(Integer.parseInt(elementKey), featuresMap);
@@ -218,18 +155,18 @@ public class ValidationFramework {
         }
     }
 
-    private void updateRecentValidationResult(List<ValidationResult> validationResults) {
+    public void updateRecentValidationResult(List<ValidationResult> validationResults) {
         this.recentValidationResult = validationResults;
         this.changeListener.changed(validationResults);
     }
 
-    private List<ValidationResult> jsonToValidationResultList(ObjectMapper mapper, JsonNode responseData){
-        List<ValidationResult> result = new ArrayList();
+    List<ValidationResult> jsonToValidationResultList(ObjectMapper mapper, JsonNode responseData) throws JsonProcessingException{
+        List<ValidationResult> result = new ArrayList<ValidationResult>();
         //Filter out the Diagnosis Message
         if(!(responseData.get("code").asInt() == 0 && responseData.get("source").asText().equals("org.eclipse.emf.ecore"))){
             //Check if this is an Error and add it if it is not filtered
             if(responseData.get("severity").asInt() != 0){
-                ValidationResult validationResult = jsonToValidationResult(mapper, responseData);
+                ValidationResult validationResult = mapper.treeToValue(responseData, ValidationResult.class);
                 ValidationFilter filter = new ValidationFilter(validationResult.getDiagnostic().getCode(),
                             validationResult.getDiagnostic().getSource());
                 if(!validationFilterList.contains(filter)){
@@ -240,30 +177,6 @@ public class ValidationFramework {
         //Call Method for all children
         for(JsonNode diagnosticData: responseData.get("children")){
             result.addAll(jsonToValidationResultList(mapper, diagnosticData));
-        }
-        return result;
-    }
-
-    private ValidationResult jsonToValidationResult(ObjectMapper mapper, JsonNode diagnosticData) {
-        String identifier = diagnosticData.get("id").asText();
-        BasicDiagnostic diagnostic = jsonToDiagnostic(mapper, diagnosticData);
-        return new ValidationResult(identifier, diagnostic);
-    }
-
-    private BasicDiagnostic jsonToDiagnostic(ObjectMapper mapper, JsonNode responseData){
-        Object[] dataField = mapper.convertValue(responseData.get("data"), Object[].class);
-        List<BasicDiagnostic> children = new ArrayList<>();
-        for (JsonNode child : responseData.get("children")) {
-            children.add(jsonToDiagnostic(mapper, child));
-        }
-        BasicDiagnostic result;
-        if (children.isEmpty()) {
-            result = new BasicDiagnostic(responseData.get("severity").asInt(), responseData.get("source").asText(),
-                    responseData.get("code").asInt(), responseData.get("message").asText(), dataField);
-        } else {
-            result = new BasicDiagnostic(responseData.get("source").asText(), responseData.get("code").asInt(),
-                    children, responseData.get("message").asText(), dataField);
-            result.recomputeSeverity();
         }
         return result;
     }
