@@ -74,7 +74,7 @@ public class ValidationFramework {
     }
 
     public CompletableFuture<Void> getConstraintList() {
-        return this.modelServerApi.getConstraints(modelUri).thenAccept(s -> {
+        return this.modelServerApi.getValidationConstraints(modelUri).thenAccept(s -> {
             try {
                 readConstraintList(s.body());
             } catch (IOException e) {
@@ -85,11 +85,11 @@ public class ValidationFramework {
     }
 
     public void subscribeToValidation() {
-        this.modelServerApi.validationSubscribe(modelUri, new ValidationSubscriptionListener(this, modelUri));
+        this.modelServerApi.subscribe(modelUri, new ValidationSubscriptionListener(this, modelUri), "xmi");
     }
 
     public void unsubscribeFromValidation() {
-        this.modelServerApi.unsubscribeValidation(modelUri);
+        this.modelServerApi.unsubscribe(modelUri);
     }
 
     public void addValidationFilter(List<ValidationFilter> filters)

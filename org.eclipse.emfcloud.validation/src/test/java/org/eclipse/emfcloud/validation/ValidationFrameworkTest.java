@@ -56,7 +56,7 @@ public class ValidationFrameworkTest {
     @Before
     public void setup() {
         mockAPI = Mockito.mock(ModelServerClientApi.class);
-        Mockito.when(mockAPI.getConstraints("test")).thenReturn(mockConstraintList());
+        Mockito.when(mockAPI.getValidationConstraints("test")).thenReturn(mockConstraintList());
         Mockito.when(mockAPI.validate("test")).thenReturn(mockValidation());
         ValidationResultChangeListener changeListener = new ValidationResultChangeListener() {
             public void changed(java.util.List<ValidationResult> newResult) {
