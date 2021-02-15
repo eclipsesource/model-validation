@@ -46,7 +46,7 @@ public class ValidationFramework {
 
     public ValidationResultChangeListener changeListener;
 
-    public Map<Integer, Map<Integer, EMFFacetConstraints>> inputValidationMap = new HashMap<>();
+    public Map<String, Map<String, EMFFacetConstraints>> inputValidationMap = new HashMap<>();
 
     private List<ValidationFilter> validationFilterList = new ArrayList<>();
 
@@ -65,7 +65,7 @@ public class ValidationFramework {
     public CompletableFuture<Void> validate() throws IOException, InterruptedException, ExecutionException {
         return this.modelServerApi.validate(modelUri).thenAccept(s -> {
             try {
-                readData(modelUri, s.body());
+                readData(s.body());
             } catch (IOException e) {
             	LOG.error("Cannot validate " + modelUri);
                 e.printStackTrace();
@@ -85,7 +85,7 @@ public class ValidationFramework {
     }
 
     public void subscribeToValidation() {
-        this.modelServerApi.subscribe(modelUri, new ValidationSubscriptionListener(this, modelUri), "xmi");
+        this.modelServerApi.subscribeWithValidation(modelUri, new ValidationSubscriptionListener(this, modelUri), "xmi");
     }
 
     public void unsubscribeFromValidation() {
@@ -118,7 +118,7 @@ public class ValidationFramework {
         this.validate();
     }
 
-    private void readData(String modeluri, String body) throws IOException {
+    private void readData(String body) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new ValidationMapperModule());
         mapper.registerModule(new ValidationResultModule());
@@ -139,7 +139,7 @@ public class ValidationFramework {
             Iterator<String> iterElements = listOfElements.fieldNames();
             while (iterElements.hasNext()){
                 String elementKey = iterElements.next();
-                HashMap<Integer, EMFFacetConstraints> featuresMap = new HashMap<>();
+                HashMap<String, EMFFacetConstraints> featuresMap = new HashMap<>();
                 JsonNode listOfFeatures = listOfElements.get(elementKey);
                 //Iterate over all Features
                 Iterator<String> iterFeature = listOfFeatures.fieldNames();
@@ -147,10 +147,10 @@ public class ValidationFramework {
                     String featureKey = iterFeature.next();
                     JsonNode facets = listOfFeatures.get(featureKey);
 
-                    EMFFacetConstraints emfFacetConstraints = mapper.treeToValue(facets, EMFFacetConstraints.class);
-                    featuresMap.put(Integer.parseInt(featureKey), emfFacetConstraints);
+                    EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(mapper.convertValue(facets, Map.class));
+                    featuresMap.put(featureKey, emfFacetConstraints);
                 }
-                this.inputValidationMap.put(Integer.parseInt(elementKey), featuresMap);
+                this.inputValidationMap.put(elementKey, featuresMap);
             }
         }
     }

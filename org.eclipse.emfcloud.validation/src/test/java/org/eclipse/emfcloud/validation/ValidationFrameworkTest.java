@@ -10,6 +10,7 @@
  ******************************************************************************/
 package org.eclipse.emfcloud.validation;
 
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -71,8 +72,8 @@ public class ValidationFrameworkTest {
         framework.getConstraintList();
 
         // Check Constraint List
-        assertTrue(framework.inputValidationMap.get(1).get(5).isEnumerationDefault());
-        assertTrue(!framework.inputValidationMap.get(1).get(5).isWhiteSpaceDefault());
+        assertNull(framework.inputValidationMap.get("Employee").get("tasks").getEnumeration());
+        assertTrue(framework.inputValidationMap.get("Employee").get("tasks").getWhiteSpace()==2);
     }
 
     @Test
@@ -120,30 +121,31 @@ public class ValidationFrameworkTest {
 
     private CompletableFuture<Response<String>> mockConstraintList() {
         ObjectMapper mapper = EMFModule.setupDefaultMapper();
-        Map<Integer, Map<Integer, EMFFacetConstraints>> constraintMap = new HashMap<>();
-        EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(
-                        2,
-                        List.of(),
-                        List.of(),
-                        -1,
-                        -1,
-                        -1,
-                        -1,
-                        -1,
-                        null,
-                        null,
-                        null,
-                        null);
-        Map<Integer,EMFFacetConstraints> innerMap = new HashMap<>();
-        innerMap.putIfAbsent(5, emfFacetConstraints);
-        constraintMap.put(1, innerMap);
+        Map<String, Map<String, EMFFacetConstraints>> constraintMap = new HashMap<>();
+        Map<String, Object> mockFacets = new HashMap();
+        mockFacets.put(EMFFacetConstraints.WHITESPACE, 2);
+        mockFacets.put(EMFFacetConstraints.ENUMERATION, List.of());
+        mockFacets.put(EMFFacetConstraints.PATTERN, List.of());
+        mockFacets.put(EMFFacetConstraints.LENGTH, -1);
+        mockFacets.put(EMFFacetConstraints.MINLENGTH, -1);
+        mockFacets.put(EMFFacetConstraints.MAXLENGTH, -1);
+        mockFacets.put(EMFFacetConstraints.TOTALDIGITS, -1);
+        mockFacets.put(EMFFacetConstraints.FRACTIONDIGITS, -1);
+        mockFacets.put(EMFFacetConstraints.MININCLUSIVE, null);
+        mockFacets.put(EMFFacetConstraints.MAXINCLUSIVE, null);
+        mockFacets.put(EMFFacetConstraints.MINEXCLUSIVE, null);
+        mockFacets.put(EMFFacetConstraints.MAXEXCLUSIVE, null);
+        EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(mockFacets);
+        Map<String,EMFFacetConstraints> innerMap = new HashMap<>();
+        innerMap.putIfAbsent("tasks", emfFacetConstraints);
+        constraintMap.put("Employee", innerMap);
         JsonNode body = JsonResponse.success(mapper.valueToTree(constraintMap));
 
         return CompletableFuture.completedFuture(getResponse("validation/constraints", body));
     }
 
     private CompletableFuture<Response<String>> mockValidation(){
-        return CompletableFuture.completedFuture(getResponse("validation/", 
+        return CompletableFuture.completedFuture(getResponse("validation", 
             JsonResponse.validationResult(getDiagnostic("src/test/java/org/eclipse/emfcloud/validation/test.ecore"))));
     }
 

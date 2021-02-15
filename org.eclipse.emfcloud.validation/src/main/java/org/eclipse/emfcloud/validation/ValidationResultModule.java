@@ -23,6 +23,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class ValidationResultModule extends SimpleModule {
 
+   /**
+    *
+    */
+   private static final long serialVersionUID = 1L;
+
    public ValidationResultModule() {
       addDeserializer(ValidationResult.class, new ValidationResultDeserializer());
    }
