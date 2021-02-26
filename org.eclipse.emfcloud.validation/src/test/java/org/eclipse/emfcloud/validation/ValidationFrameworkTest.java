@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 EclipseSource and others.
+ * Copyright (c) 2020-2021 EclipseSource and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -50,135 +50,130 @@ import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
 
 public class ValidationFrameworkTest {
 
-    ValidationFramework framework;
+	ValidationFramework framework;
 
-    ModelServerClientApi mockAPI;
+	ModelServerClientApi mockAPI;
 
-    @Before
-    public void setup() {
-        mockAPI = Mockito.mock(ModelServerClientApi.class);
-        Mockito.when(mockAPI.getValidationConstraints("test")).thenReturn(mockConstraintList());
-        Mockito.when(mockAPI.validate("test")).thenReturn(mockValidation());
-        ValidationResultChangeListener changeListener = new ValidationResultChangeListener() {
-            public void changed(java.util.List<ValidationResult> newResult) {
-            }
-        };
-        framework = new ValidationFramework("test", mockAPI, changeListener);
-    }
+	@Before
+	public void setup() {
+		mockAPI = Mockito.mock(ModelServerClientApi.class);
+		Mockito.when(mockAPI.getValidationConstraints("test")).thenReturn(mockConstraintList());
+		Mockito.when(mockAPI.validate("test")).thenReturn(mockValidation());
+		ValidationResultChangeListener changeListener = new ValidationResultChangeListener() {
+			public void changed(java.util.List<ValidationResult> newResult) {
+			}
+		};
+		framework = new ValidationFramework("test", mockAPI, changeListener);
+	}
 
-    @Test
-    public void testConstraintList() throws MalformedURLException {
-        // Retrieve Constraint List
-        framework.getConstraintList();
+	@Test
+	public void testConstraintList() throws MalformedURLException {
+		// Retrieve Constraint List
+		framework.getConstraintList();
 
-        // Check Constraint List
-        assertNull(framework.inputValidationMap.get("Employee").get("tasks").getEnumeration());
-        assertTrue(framework.inputValidationMap.get("Employee").get("tasks").getWhiteSpace()==2);
-    }
+		// Check Constraint List
+		assertNull(framework.getInputValidationMap().get("Employee").get("tasks").getEnumeration());
+		assertTrue(framework.getInputValidationMap().get("Employee").get("tasks").getWhiteSpace() == 2);
+	}
 
-    @Test
-    public void testValidation() throws IOException, InterruptedException, ExecutionException {
-        // Validate Model
-        framework.validate();
-        // Check Result
-        assertTrue(framework.recentValidationResult.size() == 2);
-    }
+	@Test
+	public void testValidation() throws IOException, InterruptedException, ExecutionException {
+		// Validate Model
+		framework.validate();
+		// Check Result
+		assertTrue(framework.getRecentValidationResult().size() == 2);
+	}
 
-    @Test
-    public void testSubscription() {
-        // Subscribe
-        ValidationSubscriptionListener listener = new ValidationSubscriptionListener(framework, "test");
-        // Simulate OnOpen
-        listener.onOpen(null);
-        // Check ValidationResult
-        assertTrue(framework.recentValidationResult.size() == 2);
-        // Simulate Notification
-        listener.onNotification(new ModelServerNotification("validationResult", Optional.of(
-            getDiagnostic("src/test/java/org/eclipse/emfcloud/validation/emptyTest.ecore").toString())));
-        // Check ValidationResult
-        assertTrue(framework.recentValidationResult.size() == 0);
-    }
+	@Test
+	public void testSubscription() {
+		// Subscribe
+		ValidationSubscriptionListener listener = new ValidationSubscriptionListener(framework, "test");
+		// Simulate OnOpen
+		listener.onOpen(null);
+		// Check ValidationResult
+		assertTrue(framework.getRecentValidationResult().size() == 2);
+		// Simulate Notification
+		listener.onNotification(new ModelServerNotification("validationResult", Optional
+				.of(getDiagnostic("src/test/java/org/eclipse/emfcloud/validation/emptyTest.ecore").toString())));
+		// Check ValidationResult
+		assertTrue(framework.getRecentValidationResult().size() == 0);
+	}
 
-    @Test
-    public void testFilter() throws IOException, InterruptedException, ExecutionException {
-        // Validate
-        framework.validate();
-        // Check Result
-        assertTrue(framework.recentValidationResult.size() == 2);
-        // Add Filter
-        framework.addValidationFilter(List.of(new ValidationFilter(29, "org.eclipse.emf.ecore.model")));
-        // Check Result
-        assertTrue(framework.recentValidationResult.size() == 1);
-        // Remove Filter
-        framework.removeValidationFilter(List.of(new ValidationFilter(29, "org.eclipse.emf.ecore.model")));
-        // Check Result
-        assertTrue(framework.recentValidationResult.size() == 2);
-        // Toggle Filter
-        framework.toggleValidationFilter(new ValidationFilter(6, "org.eclipse.emf.ecore.model"));
-        // Check Result
-        assertTrue(framework.recentValidationResult.size() == 1);
-    }
+	@Test
+	public void testFilter() throws IOException, InterruptedException, ExecutionException {
+		// Validate
+		framework.validate();
+		// Check Result
+		assertTrue(framework.getRecentValidationResult().size() == 2);
+		// Add Filter
+		framework.addValidationFilter(List.of(new ValidationFilter(29, "org.eclipse.emf.ecore.model")));
+		// Check Result
+		assertTrue(framework.getRecentValidationResult().size() == 1);
+		// Remove Filter
+		framework.removeValidationFilter(List.of(new ValidationFilter(29, "org.eclipse.emf.ecore.model")));
+		// Check Result
+		assertTrue(framework.getRecentValidationResult().size() == 2);
+		// Toggle Filter
+		framework.toggleValidationFilter(new ValidationFilter(6, "org.eclipse.emf.ecore.model"));
+		// Check Result
+		assertTrue(framework.getRecentValidationResult().size() == 1);
+	}
 
-    private CompletableFuture<Response<String>> mockConstraintList() {
-        ObjectMapper mapper = EMFModule.setupDefaultMapper();
-        Map<String, Map<String, EMFFacetConstraints>> constraintMap = new HashMap<>();
-        Map<String, Object> mockFacets = new HashMap();
-        mockFacets.put(EMFFacetConstraints.WHITESPACE, 2);
-        mockFacets.put(EMFFacetConstraints.ENUMERATION, List.of());
-        mockFacets.put(EMFFacetConstraints.PATTERN, List.of());
-        mockFacets.put(EMFFacetConstraints.LENGTH, -1);
-        mockFacets.put(EMFFacetConstraints.MINLENGTH, -1);
-        mockFacets.put(EMFFacetConstraints.MAXLENGTH, -1);
-        mockFacets.put(EMFFacetConstraints.TOTALDIGITS, -1);
-        mockFacets.put(EMFFacetConstraints.FRACTIONDIGITS, -1);
-        mockFacets.put(EMFFacetConstraints.MININCLUSIVE, null);
-        mockFacets.put(EMFFacetConstraints.MAXINCLUSIVE, null);
-        mockFacets.put(EMFFacetConstraints.MINEXCLUSIVE, null);
-        mockFacets.put(EMFFacetConstraints.MAXEXCLUSIVE, null);
-        EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(mockFacets);
-        Map<String,EMFFacetConstraints> innerMap = new HashMap<>();
-        innerMap.putIfAbsent("tasks", emfFacetConstraints);
-        constraintMap.put("Employee", innerMap);
-        JsonNode body = JsonResponse.success(mapper.valueToTree(constraintMap));
+	private CompletableFuture<Response<String>> mockConstraintList() {
+		ObjectMapper mapper = EMFModule.setupDefaultMapper();
+		Map<String, Map<String, EMFFacetConstraints>> constraintMap = new HashMap<>();
+		Map<String, Object> mockFacets = new HashMap();
+		mockFacets.put(EMFFacetConstraints.WHITESPACE, 2);
+		mockFacets.put(EMFFacetConstraints.ENUMERATION, List.of());
+		mockFacets.put(EMFFacetConstraints.PATTERN, List.of());
+		mockFacets.put(EMFFacetConstraints.LENGTH, -1);
+		mockFacets.put(EMFFacetConstraints.MINLENGTH, -1);
+		mockFacets.put(EMFFacetConstraints.MAXLENGTH, -1);
+		mockFacets.put(EMFFacetConstraints.TOTALDIGITS, -1);
+		mockFacets.put(EMFFacetConstraints.FRACTIONDIGITS, -1);
+		mockFacets.put(EMFFacetConstraints.MININCLUSIVE, null);
+		mockFacets.put(EMFFacetConstraints.MAXINCLUSIVE, null);
+		mockFacets.put(EMFFacetConstraints.MINEXCLUSIVE, null);
+		mockFacets.put(EMFFacetConstraints.MAXEXCLUSIVE, null);
+		EMFFacetConstraints emfFacetConstraints = new EMFFacetConstraints(mockFacets);
+		Map<String, EMFFacetConstraints> innerMap = new HashMap<>();
+		innerMap.putIfAbsent("tasks", emfFacetConstraints);
+		constraintMap.put("Employee", innerMap);
+		JsonNode body = JsonResponse.success(mapper.valueToTree(constraintMap));
 
-        return CompletableFuture.completedFuture(getResponse("validation/constraints", body));
-    }
+		return CompletableFuture.completedFuture(getResponse("validation/constraints", body));
+	}
 
-    private CompletableFuture<Response<String>> mockValidation(){
-        return CompletableFuture.completedFuture(getResponse("validation", 
-            JsonResponse.validationResult(getDiagnostic("src/test/java/org/eclipse/emfcloud/validation/test.ecore"))));
-    }
+	private CompletableFuture<Response<String>> mockValidation() {
+		return CompletableFuture.completedFuture(getResponse("validation", JsonResponse
+				.validationResult(getDiagnostic("src/test/java/org/eclipse/emfcloud/validation/test.ecore"))));
+	}
 
-    private JsonNode getDiagnostic(String path){
-        ObjectMapper mapper = EMFModule.setupDefaultMapper();
-        //Load Resource
-        ResourceSet set = new ResourceSetImpl();
-        set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new EcoreResourceFactoryImpl());
-        URI uri = URI.createFileURI(path);
-        Resource res = set.getResource(uri, true);
+	private JsonNode getDiagnostic(String path) {
+		ObjectMapper mapper = EMFModule.setupDefaultMapper();
+		// Load Resource
+		ResourceSet set = new ResourceSetImpl();
+		set.getResourceFactoryRegistry().getExtensionToFactoryMap().put("ecore", new EcoreResourceFactoryImpl());
+		URI uri = URI.createFileURI(path);
+		Resource res = set.getResource(uri, true);
 
-        //Register Serialization
-        mapper.registerModule(new ValidationMapperModule(res));
+		// Register Serialization
+		mapper.registerModule(new ValidationMapperModule(res));
 
-        //Create Diagnostic
-        BasicDiagnostic diagnostic = Diagnostician.INSTANCE.createDefaultDiagnostic(res.getContents().get(0));
-        Diagnostician.INSTANCE.validate(res.getContents().get(0), diagnostic,
-            Diagnostician.INSTANCE.createDefaultContext());
+		// Create Diagnostic
+		BasicDiagnostic diagnostic = Diagnostician.INSTANCE.createDefaultDiagnostic(res.getContents().get(0));
+		Diagnostician.INSTANCE.validate(res.getContents().get(0), diagnostic,
+				Diagnostician.INSTANCE.createDefaultContext());
 
-        return mapper.valueToTree(diagnostic);
-    }
+		return mapper.valueToTree(diagnostic);
+	}
 
-    private Response<String> getResponse(String url, JsonNode body){
-        okhttp3.Response.Builder httpBuilder = new okhttp3.Response.Builder();
-        httpBuilder
-            .request(new okhttp3.Request.Builder().url("http://localhost:8081/api/v1/"+url+"/test").build())
-            .protocol(Protocol.HTTP_1_1)
-            .code(200)
-            .message("success")
-            .body(ResponseBody.create(
-                body.toString(),
-                MediaType.get("application/json")));
-        return new Response<String>(httpBuilder.build());
-    }
-        
+	private Response<String> getResponse(String url, JsonNode body) {
+		okhttp3.Response.Builder httpBuilder = new okhttp3.Response.Builder();
+		httpBuilder.request(new okhttp3.Request.Builder().url("http://localhost:8081/api/v1/" + url + "/test").build())
+				.protocol(Protocol.HTTP_1_1).code(200).message("success")
+				.body(ResponseBody.create(body.toString(), MediaType.get("application/json")));
+		return new Response<String>(httpBuilder.build());
+	}
+
 }

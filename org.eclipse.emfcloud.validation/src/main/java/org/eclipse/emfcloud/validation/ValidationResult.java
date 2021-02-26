@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 EclipseSource and others.
+ * Copyright (c) 2020-2021 EclipseSource and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -14,20 +14,20 @@ import org.eclipse.emf.common.util.BasicDiagnostic;
 
 public class ValidationResult {
 
-    private String identifier;
-    private BasicDiagnostic diagnostic;
+	private String identifier;
+	private BasicDiagnostic diagnostic;
 
-    public ValidationResult(String identifier, BasicDiagnostic diagnostic){
-        this.identifier = identifier;
-        this.diagnostic = diagnostic;
-    }
+	public ValidationResult(String identifier, BasicDiagnostic diagnostic) {
+		this.identifier = identifier;
+		this.diagnostic = diagnostic;
+	}
 
-    public String getIdentifier(){
-        return identifier;
-    }
+	public String getIdentifier() {
+		return identifier;
+	}
 
-    public BasicDiagnostic getDiagnostic(){
-        return diagnostic;
-    }
-    
+	public BasicDiagnostic getDiagnostic() {
+		return diagnostic;
+	}
+
 }

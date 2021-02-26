@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020 EclipseSource and others.
+ * Copyright (c) 2020-2021 EclipseSource and others.
  *
  * This program and the accompanying materials are made available under the
  * terms of the Eclipse Public License v. 2.0 which is available at
@@ -12,29 +12,29 @@ package org.eclipse.emfcloud.validation;
 
 public class ValidationFilter {
 
-    private int code;
-    private String source;
+	private int code;
+	private String source;
 
-    public ValidationFilter(int code, String source){
-        this.code = code;
-        this.source = source;
-    }
+	public ValidationFilter(int code, String source) {
+		this.code = code;
+		this.source = source;
+	}
 
-    public int getCode(){
-        return code;
-    }
+	public int getCode() {
+		return code;
+	}
 
-    public String getSource(){
-        return source;
-    }
+	public String getSource() {
+		return source;
+	}
 
-    @Override
-    public boolean equals(Object obj) {
-        ValidationFilter other = (ValidationFilter) obj;
-        if (code == other.code && source.equals(other.source)){
-            return true;
-        }
-        return false;
-    }
+	@Override
+	public boolean equals(Object obj) {
+		ValidationFilter other = (ValidationFilter) obj;
+		if (code == other.code && source.equals(other.source)) {
+			return true;
+		}
+		return false;
+	}
 
 }
