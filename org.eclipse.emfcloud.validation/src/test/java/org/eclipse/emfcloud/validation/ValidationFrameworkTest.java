@@ -22,31 +22,30 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.mockito.Mockito;
-
-import okhttp3.MediaType;
-import okhttp3.Protocol;
-import okhttp3.ResponseBody;
-
 import org.eclipse.emf.common.util.BasicDiagnostic;
 import org.eclipse.emf.common.util.URI;
-import org.eclipse.emfcloud.modelserver.client.ModelServerClientApi;
-import org.eclipse.emfcloud.modelserver.client.ModelServerNotification;
-import org.eclipse.emfcloud.modelserver.client.Response;
-import org.eclipse.emfcloud.modelserver.emf.common.EMFFacetConstraints;
-import org.eclipse.emfcloud.modelserver.emf.common.ValidationMapperModule;
-import org.eclipse.emfcloud.modelserver.emf.common.JsonResponse;
-import org.emfjson.jackson.module.EMFModule;
-import org.junit.Before;
-import org.junit.Test;
 import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.emf.ecore.resource.ResourceSet;
 import org.eclipse.emf.ecore.resource.impl.ResourceSetImpl;
 import org.eclipse.emf.ecore.util.Diagnostician;
 import org.eclipse.emf.ecore.xmi.impl.EcoreResourceFactoryImpl;
+import org.eclipse.emfcloud.modelserver.client.ModelServerClientApi;
+import org.eclipse.emfcloud.modelserver.client.ModelServerNotification;
+import org.eclipse.emfcloud.modelserver.client.Response;
+import org.eclipse.emfcloud.modelserver.emf.common.EMFFacetConstraints;
+import org.eclipse.emfcloud.modelserver.emf.common.JsonResponse;
+import org.eclipse.emfcloud.modelserver.emf.common.ValidationMapperModule;
+import org.emfjson.jackson.module.EMFModule;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import okhttp3.MediaType;
+import okhttp3.Protocol;
+import okhttp3.ResponseBody;
 
 public class ValidationFrameworkTest {
 

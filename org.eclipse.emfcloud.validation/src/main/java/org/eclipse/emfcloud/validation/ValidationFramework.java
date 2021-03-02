@@ -34,7 +34,7 @@ import org.emfjson.jackson.module.EMFModule;
 
 public class ValidationFramework {
 
-	private static Logger LOG = Logger.getLogger(ValidationFramework.class.getSimpleName());
+	private static Logger LOG = Logger.getLogger(ValidationFramework.class);
 
 	private String defaultURL = "http://localhost:8081/api/v1/";
 
@@ -169,15 +169,12 @@ public class ValidationFramework {
 	List<ValidationResult> jsonToValidationResultList(ObjectMapper mapper, JsonNode responseData)
 			throws JsonProcessingException {
 		List<ValidationResult> result = new ArrayList<ValidationResult>();
-		if (!isDiagnosisMessage(responseData.get(ValidationMapperModule.CODE).asInt(),
-				responseData.get(ValidationMapperModule.SOURCE).asText())) {
-			if (responseData.get(ValidationMapperModule.SEVERITY).asInt() != 0) {
-				ValidationResult validationResult = mapper.treeToValue(responseData, ValidationResult.class);
-				ValidationFilter filter = new ValidationFilter(validationResult.getDiagnostic().getCode(),
-						validationResult.getDiagnostic().getSource());
-				if (!validationFilterList.contains(filter)) {
-					result.add(validationResult);
-				}
+		if (isErrorDiagnostic(responseData)) {
+			ValidationResult validationResult = mapper.treeToValue(responseData, ValidationResult.class);
+			ValidationFilter filter = new ValidationFilter(validationResult.getDiagnostic().getCode(),
+					validationResult.getDiagnostic().getSource());
+			if (!validationFilterList.contains(filter)) {
+				result.add(validationResult);
 			}
 		}
 		for (JsonNode diagnosticData : responseData.get("children")) {
@@ -186,8 +183,23 @@ public class ValidationFramework {
 		return result;
 	}
 
-	private boolean isDiagnosisMessage(int code, String source) {
-		if (code == 0 && source == "org.eclipse.emf.ecore") {
+	private boolean isErrorDiagnostic(JsonNode responseData) {
+		if (isDiagnosisMessage(responseData) || isSeverityOK(responseData)) {
+			return false;
+		}
+		return true;
+	}
+
+	private boolean isDiagnosisMessage(JsonNode responseData) {
+		if (responseData.get(ValidationMapperModule.CODE).asInt() == 0
+				&& responseData.get(ValidationMapperModule.SOURCE).asText().equals("org.eclipse.emf.ecore")) {
+			return true;
+		}
+		return false;
+	}
+
+	private boolean isSeverityOK(JsonNode responseData) {
+		if (responseData.get(ValidationMapperModule.SEVERITY).asInt() == 0) {
 			return true;
 		}
 		return false;

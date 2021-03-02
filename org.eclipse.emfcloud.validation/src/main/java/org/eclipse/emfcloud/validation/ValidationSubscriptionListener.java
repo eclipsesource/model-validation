@@ -26,7 +26,7 @@ public class ValidationSubscriptionListener implements SubscriptionListener {
 	private final ValidationFramework framework;
 	private final String modelUri;
 
-	private static Logger LOG = Logger.getLogger(ValidationSubscriptionListener.class.getSimpleName());
+	private static Logger LOG = Logger.getLogger(ValidationSubscriptionListener.class);
 
 	public ValidationSubscriptionListener(final ValidationFramework framework, final String modelUri) {
 		this.framework = framework;
