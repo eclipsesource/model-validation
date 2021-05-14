@@ -5,7 +5,7 @@
 	<groupId>org.eclipse.emfcloud.validation</groupId>
 	<artifactId>org.eclipse.emfcloud.validation.parent</artifactId>
 	<description>Model Validation Parent Pom</description>
-	<version>1.0.0-SNAPSHOT</version>
+	<version>0.2.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>Model Validation Parent</name>
 	<licenses>
@@ -30,7 +30,7 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.java.target>11</project.build.java.target>
-		<target.version>1.0.0-SNAPSHOT</target.version>
+		<target.version>0.2.0-SNAPSHOT</target.version>
 	</properties>
 
 	<dependencies>
@@ -52,8 +52,8 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<properties>
-				<tycho-version>2.2.0</tycho-version>
-				<tychoExtrasVersion>2.2.0</tychoExtrasVersion>
+				<tycho-version>2.3.0</tycho-version>
+				<tychoExtrasVersion>2.3.0</tychoExtrasVersion>
 			</properties>
 			<modules>
 				<module>org.eclipse.emfcloud.validation.framework</module>
@@ -149,12 +149,7 @@
 								</environment>
 							</environments>
 							<target>
-								<artifact>
-									<groupId>org.eclipse.emfcloud.validation</groupId>
-									<artifactId>org.eclipse.emfcloud.validation.parent</artifactId>
-									<classifier>targetplatform/r2021-03</classifier>
-									<version>${target.version}</version>
-								</artifact>
+								<file>../targetplatform/r2021-03.target</file>
 							</target>
 						</configuration>
 					</plugin>
@@ -173,7 +168,7 @@
 				<module>releng</module>
 			</modules>
 		</profile>
-		
+
 		<profile>
 			<id>m2</id>
 			<activation>
@@ -189,7 +184,6 @@
 			<modules>
 				<module>org.eclipse.emfcloud.validation.framework</module>
 				<module>targetplatform</module>
-				<module>releng</module>
 			</modules>
 			<build>
 				<plugins>
@@ -231,7 +225,7 @@
 						<artifactId>maven-checkstyle-plugin</artifactId>
 						<version>3.1.0</version>
 						<configuration>
-							<configLocation>releng/org.eclipse.emfcloud.validation.codestyle/checkstyle/model-validation-checkstyle.xml</configLocation>
+							<configLocation>emfcloud-checkstyle.xml</configLocation>
 							<consoleOutput>true</consoleOutput>
 						</configuration>
 						<executions>
@@ -248,6 +242,11 @@
 								<artifactId>checkstyle</artifactId>
 								<version>8.29</version>
 							</dependency>
+							<dependency>
+								<groupId>org.eclipse.emfcloud</groupId>
+								<artifactId>org.eclipse.emfcloud.checkstyle</artifactId>
+								<version>0.1.0-RC1</version>
+							</dependency>
 						</dependencies>
 					</plugin>
 				</plugins>
@@ -259,7 +258,6 @@
 			<modules>
 				<module>org.eclipse.emfcloud.validation.framework</module>
 				<module>targetplatform</module>
-				<module>releng</module>
 			</modules>
 			<distributionManagement>
 				<snapshotRepository>

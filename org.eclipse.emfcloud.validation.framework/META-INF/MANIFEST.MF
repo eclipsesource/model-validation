@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Modelserver Validation
 Bundle-SymbolicName: org.eclipse.emfcloud.validation.framework
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 0.2.0.qualifier
 Export-Package: 
  org.eclipse.emfcloud.validation.framework
 Require-Bundle: org.apache.log4j;bundle-version="1.2.15",
