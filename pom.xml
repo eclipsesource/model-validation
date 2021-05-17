@@ -183,7 +183,6 @@
 			</repositories>
 			<modules>
 				<module>org.eclipse.emfcloud.validation.framework</module>
-				<module>targetplatform</module>
 			</modules>
 			<build>
 				<plugins>
@@ -257,7 +256,6 @@
 			<id>m2-release</id>
 			<modules>
 				<module>org.eclipse.emfcloud.validation.framework</module>
-				<module>targetplatform</module>
 			</modules>
 			<distributionManagement>
 				<snapshotRepository>
