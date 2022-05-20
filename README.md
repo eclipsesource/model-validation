@@ -1,3 +1,5 @@
+**This repository moved to https://github.com/eclipse-emfcloud/model-validation**
+
 # Model Validation
 This frameworks eases the usage of the modelserver validation capabilities.
 
